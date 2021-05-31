@@ -14,6 +14,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 import autosklearn.classification as ask
+import autosklearn.metrics as askm
 
 
 class MetricLogger:
@@ -178,6 +179,7 @@ fig1, ax = plt.subplots(figsize=(15, 10))
 sns.heatmap(data[corr_cols_2].corr(), annot=True, fmt='.2f')
 st.pyplot(fig1)
 
+st.subheader('Обучим модели')
 # Модели
 models = {'LogR': LogisticRegression(C=cs_1),
           'KNN': KNeighborsClassifier(n_neighbors=n_estimators_2),
@@ -365,23 +367,26 @@ for metric in metrics:
 # ---------------------------------------------------------------------------------------------------------------------
 
 st.subheader('Модель обученная с помощью auto-sklearn')
+data2 = pd.read_csv('data/pulsar_stars.csv')
+X = data2.drop("target_class", axis=1)
+Y = data2["target_class"]
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.25, random_state=1)
 # define the model
-automl = ask.AutoSklearnClassifier()
-st.write('1')
+TIME_BUDGET = 500
+automl = ask.AutoSklearnClassifier(time_left_for_this_task=TIME_BUDGET, metric=askm.f1)
 # train the model
 automl.fit(X_train, Y_train)
-st.write('2')
 # predict
-Y_pred = automl.predict_proba(X_test)
-st.write('3')
+Y_pred = automl.predict(X_test)
 # score
-precision = precision_score(Y_test.values, Y_pred)
-st.write('4')
-recall = recall_score(Y_test.values, Y_pred)
-f1 = f1_score(Y_test.values, Y_pred)
+precision = precision_score(Y_test, Y_pred)
+recall = recall_score(Y_test, Y_pred)
+f1 = f1_score(Y_test, Y_pred)
 st.write(f"precision_score: {precision}")
 st.write(f"recall_score: {recall}")
 st.write(f"f1_score: {f1}")
 # show all models
-# st.write(show_modes_str=automl.show_models())
-# st.write(sprint_statistics_str=automl.sprint_statistics())
+show_models_str = automl.show_models()
+st.write(show_models_str)
+sprint_statistics_str = automl.sprint_statistics()
+st.write(sprint_statistics_str)
